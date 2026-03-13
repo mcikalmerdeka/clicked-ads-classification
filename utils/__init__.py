@@ -32,17 +32,6 @@ from .visualization import (
     plot_correlation_heatmap
 )
 
-# ML regression functions
-from .regression_evals_and_tuning import (
-    eval_regression,
-    compare_cv_metrics as compare_cv_metrics_regression,
-    tune_pipelines as tune_pipelines_regression,
-    tune_single_model as tune_single_model_regression,
-    tune_all_models as tune_all_models_regression,
-    get_model_pipeline as get_model_pipeline_regression,
-    get_hyperparameters as get_hyperparameters_regression
-)
-
 # ML classification functions
 from .classification_evals_and_tuning import (
     eval_classification,
@@ -82,15 +71,6 @@ __all__ = [
     'plot_dynamic_boxplots_violinplots',
     'plot_dynamic_countplot',
     'plot_correlation_heatmap',
-    
-    # ML regression
-    'eval_regression',
-    'compare_cv_metrics_regression',
-    'tune_pipelines_regression',
-    'tune_single_model_regression',
-    'tune_all_models_regression',
-    'get_model_pipeline_regression',
-    'get_hyperparameters_regression',
     
     # ML classification
     'eval_classification',
