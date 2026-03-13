@@ -6,3 +6,6 @@ scikit_learn
 seaborn
 scipy
 streamlit
+statsmodels
+xgboost
+tqdm
