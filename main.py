@@ -6,7 +6,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Import all preprocessing functions
-from preprocessing import (check_data_information,
+from utils import (check_data_information,
                            initial_data_transform,
                            handle_missing_values,
                            drop_columns,
@@ -15,7 +15,7 @@ from preprocessing import (check_data_information,
                            feature_scaling
 )
 
-from feature_definitions import get_feature_definitions
+from utils.feature_definitions import get_feature_definitions
 
 # Page Config
 st.set_page_config(page_title="Ad Click Prediction Dashboard", layout="wide")
@@ -139,9 +139,8 @@ def load_model():
 # Load the model
 model, model_dir, model_path = load_model() # To use the model, call model.predict(data)
 
-# Load original CSV data form author github
-url_ori = "https://raw.githubusercontent.com/mcikalmerdeka/Predict-Customer-Clicked-Ads-Classification-By-Using-Machine-Learning/main/data/Clicked%20Ads%20Dataset.csv"
-ori_df = pd.read_csv(url_ori, index_col=0)
+# Load original CSV data from local data folder
+ori_df = pd.read_csv("data/clicked_ads_dataset.csv", index_col=0)
 
 # Initial transform for original dataframe
 ori_df = initial_data_transform(ori_df)
@@ -191,9 +190,8 @@ with st.expander("📚 Data Dictionary"):
 target_col = "Clicked on Ad"
 gather_data = False
 
-# Import the preprocessed original data (this will be used to match the columns used in the model)
-url_ori_processed = "https://raw.githubusercontent.com/mcikalmerdeka/Predict-Customer-Clicked-Ads-Classification-By-Using-Machine-Learning/main/data/df_model.csv"
-ori_df_preprocessed = pd.read_csv(url_ori_processed)
+# Import the preprocessed original data from local data folder (this will be used to match the columns used in the model)
+ori_df_preprocessed = pd.read_csv("data/df_model.csv")
 ori_df_preprocessed = ori_df_preprocessed.loc[:, ori_df_preprocessed.columns != target_col]
 
 # Input type selection
@@ -334,9 +332,8 @@ elif input_type.lower() == 'batch data':
 
         # First button with a unique key
         if st.button("Use Example Data", key="example_data_button"):
-            # Load example CSV data from author's GitHub
-            url_example_batch_df = "https://raw.githubusercontent.com/mcikalmerdeka/Predict-Customer-Clicked-Ads-Classification-By-Using-Machine-Learning/main/data/batch_example.csv"
-            batch_input_df = pd.read_csv(url_example_batch_df)
+            # Load example CSV data from local data folder
+            batch_input_df = pd.read_csv("data/batch_example.csv")
             batch_input_df = initial_data_transform(batch_input_df)
             gather_data = True
 
