@@ -1,49 +1,75 @@
-# Predict Customer Clicked Ads Classification By Using Machine Learning
+# Predict Customer Clicked Ads Classification
 
 ![Project Header](assets/Project%20Header.jpg)
 
-This project originally came from an assignment after a data science bootcamp program that I attended. Which is why you can see there are several folders of **`tasks`** that contain instructions about business questions that must be answered based on data and my presentation of them. I then developed the project further by adding new knowledge that I learned from work experience, online courses, and other sources.
+A machine learning solution to predict customer ad clicks and optimize digital marketing campaigns.
 
-- The `analysis` folder contains the main ipynb files that i used for the EDA, data preprocessing, train and save ML model, and answering business questions and formulating recommendations.
-- The `data` folder contains raw and processed data used in the project.
-- The `models` folder contains joblib files of trained model.
-- The `scripts` folder contains the scripts necessary to run the streamlit application.
+## Project Overview
 
-## 📌 Problem Statement
+End-to-end data science project that analyzes customer behavior data to predict ad click probability. Includes comprehensive EDA, preprocessing pipelines, model training, and an interactive Streamlit dashboard for real-time predictions.
 
-A digital marketing company in Indonesia faces challenges in determining the effectiveness of their advertisements and identifying the right target audience. The current approach lacks precision in reaching potential customers who are likely to engage with the ads, resulting in inefficient ad spending and lower click-through rates. This leads to reduced return on investment (ROI) on their advertising campaigns and potential loss of market opportunities.
+## Key Results
 
-## 📌 Goals
+- **Model Accuracy**: 97.3% (Tuned Logistic Regression)
+- **CTR Improvement**: 50% → 99.8%
+- **ROAS Improvement**: 1.25 → 2.43 IDR
+- **Profit Increase**: 581.8% (Rp.1.5M → Rp.8.7M)
 
-- Enhanced ad targeting: Improve advertisement effectiveness by implementing machine learning models to identify potential customers most likely to click on ads. (**MAIN**)
-- Increased ROI: Optimize advertising spend by targeting the most receptive audience segments. (**SECONDARY**)
+## Project Structure
 
-## 📌 Objectives
+```
+├── analysis/               # Jupyter notebooks (EDA, modeling, evaluation)
+├── data/                   # Raw and processed datasets
+├── models/                 # Trained model artifacts
+├── utils/                  # Reusable preprocessing and ML functions
+├── main.py                 # Streamlit application
+├── pyproject.toml          # Project dependencies (uv/pip)
+└── requirements.txt        # Pip-compatible dependencies
+```
 
-The ultimate goal of this project is to create a machine learning model that can:
+## Quick Start
 
-- Accurately predict which users are most likely to click on advertisements, with high precision and accuracy rates
-- Identify patterns in customer behavior to optimize ad targeting strategies
-- Reduce advertising costs while maintaining or improving engagement rates
+### Installation
 
-## 📌 Business Metrics
-
-- Click-Through Rate (CTR): The percentage of users who click on the advertisement divided by the total number of users who view the ad. (**MAIN**)
-- Return on Ad Spend (ROAS): The revenue generated per rupiah spent on advertising. (**MAIN**)
-
-## 📌The streamlit app from this project that can be tried with these commands:
-
-- Clone repo
-
-```python
+```bash
+# Clone repository
 git clone https://github.com/mcikalmerdeka/Predict-Customer-Clicked-Ads-Classification-By-Using-Machine-Learning.git
+cd Predict-Customer-Clicked-Ads-Classification-By-Using-Machine-Learning
+
+# Install dependencies (using pip)
+pip install -r requirements.txt
+
+# Or using uv (faster alternative)
+uv add -r requirements.txt
 ```
 
-- Navigate to streamlit file
+### Run the App
 
-```python
-cd scripts
-streamlit run app.py
+```bash
+streamlit run main.py
 ```
 
-Just follow the instructions inside the streamlit app and try it out.
+Access the app at `http://localhost:8501`
+
+## Features
+
+- **Individual Customer Analysis**: Single prediction with detailed probability breakdown
+- **Batch Processing**: Upload CSV files for bulk predictions
+- **Data Dictionary**: Comprehensive feature explanations
+- **Example Data**: Built-in test cases for quick validation
+
+## Technical Stack
+
+- Python 3.12+
+- scikit-learn (modeling)
+- pandas, numpy (data processing)
+- Streamlit (web app)
+- uv (dependency management)
+
+## Business Problem
+
+A digital marketing company needed to improve ad targeting precision to reduce wasted ad spend and increase ROI. The solution identifies high-probability clickers based on customer demographics, behavior patterns, and geographic data.
+
+## Try the Live App
+
+[Streamlit Cloud Deployment](https://clicked-ads-classification-6z2cxyrntysmfngkraa6rc.streamlit.app/)
