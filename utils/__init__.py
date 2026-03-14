@@ -1,6 +1,7 @@
 # Core preprocessing functions (always available)
 from .preprocessing import (
     check_data_information,
+    initial_data_transform,
     drop_columns,
     change_binary_dtype,
     handle_missing_values,
@@ -47,6 +48,7 @@ from .classification_evals_and_tuning import (
 __all__ = [
     # Preprocessing
     'check_data_information',
+    'initial_data_transform',
     'drop_columns',
     'change_binary_dtype',
     'handle_missing_values',

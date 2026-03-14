@@ -10,6 +10,38 @@ from typing import List, Dict, Union, Optional, Any, Tuple
 # ║                       Functions for Data Pre-Processing                          ║
 # ╚══════════════════════════════════════════════════════════════════════════════════╝
 
+## Initial data transformation
+def initial_data_transform(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Perform initial data transformation including column renaming and data type conversion.
+    
+    Parameters:
+    -----------
+    data : pd.DataFrame
+        The raw DataFrame to transform
+    
+    Returns:
+    --------
+    pd.DataFrame
+        The transformed DataFrame
+    """
+    # Rename column names to maintain consistency
+    data = data.rename(columns={'Male': 'Gender',
+                                'Timestamp': 'Visit Time',
+                                'city' : 'City',
+                                'province' : 'Province',
+                                'category' : 'Category'})
+
+    # Re-arrange column (target 'Clicked on Ad' at the end --> personal preference)
+    if 'Clicked on Ad' in data.columns:
+        data = data[[col for col in data.columns if col != 'Clicked on Ad'] + ['Clicked on Ad']]
+
+    # Change data type of Visit Time to datetime
+    if 'Visit Time' in data.columns:
+        data['Visit Time'] = pd.to_datetime(data['Visit Time'])
+
+    return data
+
 ## Checking basic data information
 def check_data_information(data: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     """
@@ -904,5 +936,175 @@ def feature_encoding(data: pd.DataFrame, ordinal_columns: Optional[List[str]] = 
                     print(f"Warning: Could not convert column '{col}' back to {original_dtypes[col]}. Error: {e}")
     
     return df_final, fitted_encoders
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════════╗
+# ║                    Backward Compatibility Wrappers                               ║
+# ║         (For main.py - maintains old API with new implementations)              ║
+# ╚══════════════════════════════════════════════════════════════════════════════════╝
+
+# Store references to the new implementations BEFORE redefining function names
+_new_handle_missing_values_impl = handle_missing_values
+_new_filter_outliers_impl = filter_outliers
+_new_feature_encoding_impl = feature_encoding
+_new_feature_scaling_impl = feature_scaling
+
+
+def handle_missing_values_compat(data, columns, strategy='fill', imputation_method='median'):
+    """
+    Backward compatible wrapper for handle_missing_values.
+    
+    Old API: handle_missing_values(data, columns, strategy='fill', imputation_method='mean')
+    New API: handle_missing_values(data, columns, strategy='mean', imputer=None)
+    
+    This wrapper translates the old API to the new API.
+    """
+    # Map old API to new API
+    if strategy == 'fill':
+        # Use imputation_method as the strategy in new API
+        new_strategy = imputation_method if imputation_method in ['mean', 'median', 'mode'] else 'median'
+    else:
+        new_strategy = strategy
+    
+    # Call the new function using the stored reference
+    result, _ = _new_handle_missing_values_impl(data, columns=columns, strategy=new_strategy)
+    # Return only the specified columns (matching old API behavior)
+    return result[columns]
+
+
+def filter_outliers_compat(data, col_series, method='iqr', threshold=1.5):
+    """
+    Backward compatible wrapper for filter_outliers.
+    
+    Old API: filter_outliers(data, col_series=['Area Income'], method='iqr')
+    New API: filter_outliers(data, columns=['Area Income'], method='iqr', threshold=1.5)
+    
+    This wrapper translates col_series to columns parameter.
+    """
+    # Call the new function using the stored reference with columns instead of col_series
+    result = _new_filter_outliers_impl(data, columns=col_series, method=method, threshold=threshold)
+    return result
+
+
+def feature_encoding_compat(data, original_data=None):
+    """
+    Backward compatible wrapper for feature_encoding specific to the Clicked Ads app.
+    
+    Old API: feature_encoding(data, original_data=ori_df_preprocessed)
+    
+    This wrapper implements the specific encoding logic needed for the Clicked Ads app.
+    """
+    # Make a copy to avoid modifying original
+    df_encoded = data.copy()
+    
+    # A. Handle ordinal encoding for Gender (Perempuan=0, Laki-Laki=1)
+    if 'Gender' in df_encoded.columns:
+        df_encoded['Gender'] = df_encoded['Gender'].map({'Perempuan': 0, 'Laki-laki': 1, 'Laki-Laki': 1, 'Perempuan': 0})
+    
+    # B. Handle one-hot encoding for Category
+    if 'Category' in df_encoded.columns:
+        # Get expected columns from original_data if provided
+        if original_data is not None:
+            unique_category = original_data.filter(like='Category_').columns
+        else:
+            # Fallback: create columns based on unique values in data
+            unique_vals = df_encoded['Category'].unique()
+            unique_category = [f'Category_{val}' for val in unique_vals]
+        
+        # Create encoded columns initialized to 0
+        category_encoded = pd.DataFrame(0, index=df_encoded.index, columns=unique_category)
+        
+        # Set the appropriate category column to 1
+        for idx in df_encoded.index:
+            category_val = df_encoded.loc[idx, 'Category']
+            col_name = f'Category_{category_val}'
+            if col_name in unique_category:
+                category_encoded.loc[idx, col_name] = 1
+        
+        # Drop original Category column and concat encoded columns
+        df_encoded = df_encoded.drop(columns=['Category'], errors='ignore')
+        df_encoded = pd.concat([df_encoded, category_encoded], axis=1)
+    
+    # C. Ensure all expected columns are present
+    if original_data is not None:
+        expected_columns = original_data.columns.tolist()
+        
+        # Add missing columns with 0 values
+        for col in expected_columns:
+            if col not in df_encoded.columns:
+                df_encoded[col] = 0
+        
+        # Remove extra columns not in expected
+        for col in list(df_encoded.columns):
+            if col not in expected_columns:
+                df_encoded = df_encoded.drop(columns=[col])
+        
+        # Reorder to match expected
+        df_encoded = df_encoded[expected_columns]
+    else:
+        expected_columns = df_encoded.columns.tolist()
+    
+    return df_encoded, expected_columns
+
+
+def feature_scaling_compat(data, original_data=None):
+    """
+    Backward compatible wrapper for feature_scaling specific to the Clicked Ads app.
+    
+    Old API: feature_scaling(data, original_data=ori_df_preprocessed)
+    
+    This wrapper implements the specific scaling logic needed for the Clicked Ads app.
+    """
+    from sklearn.preprocessing import StandardScaler
+    
+    df_scaled = data.copy()
+    
+    # Define feature groups for targeted scaling
+    standard_scaling_features = ['Daily Time Spent on Site', 'Age', 'Area Income', 'Daily Internet Usage']
+    
+    # Only scale columns that exist in the data
+    features_to_scale = [col for col in standard_scaling_features if col in df_scaled.columns]
+    
+    if len(features_to_scale) == 0:
+        return df_scaled
+    
+    # Initialize scaler
+    standard_scaler = StandardScaler()
+    
+    # If original_data is provided, fit on it first
+    if original_data is not None:
+        orig_features = [col for col in standard_scaling_features if col in original_data.columns]
+        if len(orig_features) > 0:
+            standard_scaler.fit(original_data[orig_features])
+            df_scaled[features_to_scale] = standard_scaler.transform(df_scaled[features_to_scale])
+        else:
+            # Fallback: fit on current data
+            df_scaled[features_to_scale] = standard_scaler.fit_transform(df_scaled[features_to_scale])
+    else:
+        # Fit and transform on current data
+        df_scaled[features_to_scale] = standard_scaler.fit_transform(df_scaled[features_to_scale])
+    
+    return df_scaled
+
+
+# Override the main functions with compatible versions for backward compatibility
+# These maintain the old API while using the new implementations
+
+def handle_missing_values(data, columns, strategy='fill', imputation_method='median', **kwargs):
+    """Backward compatible handle_missing_values - see handle_missing_values_compat for details."""
+    return handle_missing_values_compat(data, columns, strategy, imputation_method)
+
+def filter_outliers(data, col_series=None, method='iqr', **kwargs):
+    """Backward compatible filter_outliers - see filter_outliers_compat for details."""
+    threshold = kwargs.get('threshold', 1.5)
+    return filter_outliers_compat(data, col_series, method, threshold)
+
+def feature_encoding(data, original_data=None, **kwargs):
+    """Backward compatible feature_encoding - see feature_encoding_compat for details."""
+    return feature_encoding_compat(data, original_data)
+
+def feature_scaling(data, original_data=None, **kwargs):
+    """Backward compatible feature_scaling - see feature_scaling_compat for details."""
+    return feature_scaling_compat(data, original_data)
 
 
