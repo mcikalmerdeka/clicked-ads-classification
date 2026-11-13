@@ -23,6 +23,9 @@ End-to-end data science project that analyzes customer behavior data to predict 
 ├── models/                 # Trained model artifacts
 ├── utils/                  # Vendored data-science-utils package (do not edit)
 ├── app_pipeline.py         # Project-specific preprocessing and pipeline glue
+├── app_analytics.py        # Metrics, coefficients, and prediction explanations
+├── app_ui.py               # Shared chart and formatting helpers
+├── app_views/              # Tab views: predict, batch, insights, about
 ├── main.py                 # Streamlit application
 ├── pyproject.toml          # Project dependencies (uv/pip)
 └── requirements.txt        # Pip-compatible dependencies
@@ -54,10 +57,11 @@ Access the app at `http://localhost:8501`
 
 ## Features
 
-- **Individual Customer Analysis**: Single prediction with detailed probability breakdown
-- **Batch Processing**: Upload CSV files for bulk predictions
-- **Data Dictionary**: Comprehensive feature explanations
-- **Example Data**: Built-in test cases for quick validation
+- **Individual scoring**: single-customer prediction with probability, confidence, and a per-prediction explanation of the top drivers
+- **Batch scoring**: upload a CSV, review a results table, and download predictions
+- **Model insights**: held-out metrics, confusion matrix, global coefficients, and dataset overview
+- **Model card**: data dictionary, limitations, and provenance
+- **Example data**: built-in test cases for quick validation
 
 ## Technical Stack
 
