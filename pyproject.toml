@@ -3,7 +3,7 @@ name = "clicked-ads-classification"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "ipykernel>=7.2.0",
     "joblib>=1.5.3",
