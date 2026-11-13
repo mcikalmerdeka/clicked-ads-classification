@@ -5,17 +5,16 @@ import joblib
 import warnings
 warnings.filterwarnings('ignore')
 
-# Import all preprocessing functions
-from utils import (check_data_information,
-                           initial_data_transform,
-                           handle_missing_values,
-                           drop_columns,
-                           filter_outliers,
-                           feature_encoding,
-                           feature_scaling
-)
+# Generic helpers come from the vendored utils package.
+from utils import check_data_information
 
-from utils.feature_definitions import get_feature_definitions
+# Project-specific pipeline lives in app_pipeline so utils/ stays replaceable.
+from app_pipeline import (
+    ClickedAdsPipeline,
+    TARGET_COLUMN,
+    get_feature_definitions,
+    initial_data_transform,
+)
 
 # Page Config
 st.set_page_config(page_title="Ad Click Prediction Dashboard", layout="wide")
@@ -187,12 +186,20 @@ with st.expander("📚 Data Dictionary"):
     """)
 
 ## Specifying some variable values for the model and code flow
-target_col = "Clicked on Ad"
+target_col = TARGET_COLUMN
 gather_data = False
 
-# Import the preprocessed original data from local data folder (this will be used to match the columns used in the model)
-ori_df_preprocessed = pd.read_csv("data/df_model.csv")
-ori_df_preprocessed = ori_df_preprocessed.loc[:, ori_df_preprocessed.columns != target_col]
+
+@st.cache_resource
+def load_pipeline():
+    """Fit the preprocessing state from the repository's training data."""
+    return ClickedAdsPipeline.from_project_data(
+        raw_path="data/clicked_ads_dataset.csv",
+        reference_path="data/df_model.csv",
+    )
+
+
+pipeline = load_pipeline()
 
 # Input type selection
 input_type = st.empty()
@@ -350,78 +357,46 @@ if gather_data and input_type.lower() == 'individual customer':
         st.write(input_df)
 
         # Preprocessing steps
-
-        ## 1. Drop some uncessary columns
+        model_df = None
         try:
-            input_df = drop_columns(input_df, columns=['Visit Time'])
-        except Exception as e:  
-            st.error(f"Error in dropping columns: {str(e)}")
+            ## 1-3. Drop unused columns, handle missing values, filter outliers
+            input_df = pipeline.clean(input_df)
+            st.subheader("After Drop Columns, Handling Missing Values, and Outliers")
+            st.write(input_df)
 
-        ## 2. Handle Missing Values
-        try:
-            input_df[['Daily Time Spent on Site', 'Daily Internet Usage']] = handle_missing_values(input_df, columns=['Daily Time Spent on Site', 'Daily Internet Usage'], strategy='fill', imputation_method='mean')
-            input_df['Area Income'] = handle_missing_values(input_df, columns=['Area Income'], strategy='fill', imputation_method='median')
-            input_df['Gender'] = handle_missing_values(input_df, columns=['Gender'], strategy='fill', imputation_method='mode')
+            ## 4. Feature encoding
+            input_df = pipeline.encode(input_df)
+            st.subheader("After Feature Encoding")
+            st.write(input_df)
+
+            ## 5. Feature scaling
+            model_df = pipeline.scale(input_df)
+            st.subheader("After Feature Scaling")
+            st.write(model_df)
         except Exception as e:
-            st.error(f"Error in handling missing values: {str(e)}")
-
-        ## 3. Handle Outliers
-        try:
-            input_df = filter_outliers(input_df, col_series=['Area Income'], method='iqr')
-        except Exception as e:
-            st.error(f"Error in handling outliers: {str(e)}")
-
-        # Check data after drop unecessart columns, handling missing values and outliers
-        st.subheader("After Drop Columns, Handling Missing Values, and Outliers")
-        st.write(input_df)
-
-        ## 4. Feature encoding
-        try:
-            input_df, expected_columns = feature_encoding(input_df, original_data=ori_df_preprocessed)
-            st.session_state.expected_columns = expected_columns
-        except Exception as e:
-            st.error(f"Error in feature encoding: {str(e)}")
-            st.write("Debug information:")
-            st.write("Current columns:", input_df.columns.to_list())
-            st.write("Expected columns:", expected_columns)
-
-        # Check data after encoding
-        st.subheader("After Feature Encoding")
-        st.write(input_df)
-
-        ## 5. Feature Scaling
-        try:
-            input_df = feature_scaling(data=input_df, original_data=ori_df_preprocessed)
-        except Exception as e:
-            st.error(f"Error in feature scaling: {str(e)}")
-
-        # Check data after scaling
-        st.subheader("After Feature Scaling")
-        st.write(input_df)
+            st.error(f"Error in preprocessing: {str(e)}")
 
         # Prediction Section
-        st.subheader("Prediction Section")
+        if model_df is not None:
+            st.subheader("Prediction Section")
 
-        # Create a copy for preprocessing result
-        model_df = input_df.copy()
+            # Display the prediction result
+            try:
+                prediction = model.predict(model_df)
+                prediction_proba = model.predict_proba(model_df)
 
-        # Display the prediction result
-        try:
-            prediction = model.predict(model_df)
-            prediction_proba = model.predict_proba(model_df)
+                # Display prediction probability
+                st.write(f"Probabilities for both classes: {prediction_proba[0]}")
 
-            # Display prediction probability
-            st.write(f"Probabilities for both classes: {prediction_proba[0]}")
+                # Display prediction result with explanation
+                # 0: Not Clicked, 1: Clicked
+                if prediction[0] == 0:
+                    st.error("The customer is predicted as **Not Clicked**.\n\n**Not Clicked** means the customer is likely not to click on the ad.")
+                else:
+                    st.success("The customer is predicted as **Clicked**.\n\n**Clicked** means the customer is likely to click on the ad.")
 
-            # Display prediction result with explanation
-            # 0: Not Clicked, 1: Clicked
-            if prediction[0] == 0:
-                st.error("The customer is predicted as **Not Clicked**.\n\n**Not Clicked** means the customer is likely not to click on the ad.")
-            else:
-                st.success("The customer is predicted as **Clicked**.\n\n**Clicked** means the customer is likely to click on the ad.")
-        
-        except Exception as e:
-            st.error(f"Error in prediction: {str(e)}")
+            except Exception as e:
+                st.error(f"Error in prediction: {str(e)}")
 
 ## Prediction for batch data
 elif gather_data and input_type.lower() == 'batch data':
@@ -430,76 +405,44 @@ elif gather_data and input_type.lower() == 'batch data':
         st.write(batch_input_df.head())
 
         # Preprocessing steps
-
-        ## 1. Drop some uncessary columns
+        model_df = None
         try:
-            batch_input_df = drop_columns(batch_input_df, columns=['Visit Time'])
-        except Exception as e:  
-            st.error(f"Error in dropping columns: {str(e)}")
+            ## 1-3. Drop unused columns, handle missing values, filter outliers
+            batch_input_df = pipeline.clean(batch_input_df)
+            st.subheader("After Drop Columns, Handling Missing Values, and Outliers")
+            st.write(batch_input_df)
 
-        ## 2. Handle Missing Values
-        try:
-            batch_input_df[['Daily Time Spent on Site', 'Daily Internet Usage']] = handle_missing_values(batch_input_df, columns=['Daily Time Spent on Site', 'Daily Internet Usage'], strategy='fill', imputation_method='mean')
-            batch_input_df['Area Income'] = handle_missing_values(batch_input_df, columns=['Area Income'], strategy='fill', imputation_method='median')
-            batch_input_df['Gender'] = handle_missing_values(batch_input_df, columns=['Gender'], strategy='fill', imputation_method='mode')
+            ## 4. Feature encoding
+            batch_input_df = pipeline.encode(batch_input_df)
+            st.subheader("After Feature Encoding")
+            st.write(batch_input_df)
+
+            ## 5. Feature scaling
+            model_df = pipeline.scale(batch_input_df)
+            st.subheader("After Feature Scaling")
+            st.write(model_df)
         except Exception as e:
-            st.error(f"Error in handling missing values: {str(e)}")
-
-        ## 3. Handle Outliers
-        try:
-            batch_input_df = filter_outliers(batch_input_df, col_series=['Area Income'], method='iqr')
-        except Exception as e:
-            st.error(f"Error in handling outliers: {str(e)}")
-
-        # Check data after drop unecessart columns, handling missing values and outliers
-        st.subheader("After Drop Columns, Handling Missing Values, and Outliers")
-        st.write(batch_input_df)
-
-        ## 4. Feature encoding
-        try:
-            batch_input_df, expected_columns = feature_encoding(batch_input_df, original_data=ori_df_preprocessed)
-            st.session_state.expected_columns = expected_columns
-        except Exception as e:
-            st.error(f"Error in feature encoding: {str(e)}")
-            st.write("Debug information:")
-            st.write("Current columns:", batch_input_df.columns.to_list())
-            st.write("Expected columns:", expected_columns)
-
-        # Check data after encoding
-        st.subheader("After Feature Encoding")
-        st.write(batch_input_df)
-
-        ## 5. Feature Scaling
-        try:
-            batch_input_df = feature_scaling(data=batch_input_df, original_data=ori_df_preprocessed)
-        except Exception as e:
-            st.error(f"Error in feature scaling: {str(e)}")
-
-        # Check data after scaling
-        st.subheader("After Feature Scaling")
-        st.write(batch_input_df)     
+            st.error(f"Error in preprocessing: {str(e)}")
 
         # Prediction Section
-        st.subheader("Prediction Section")
+        if model_df is not None:
+            st.subheader("Prediction Section")
 
-        # Create a copy for preprocessing result
-        model_df = batch_input_df.copy()
+            # Display prediction result with explanation
+            # 0: Not Clicked, 1: Clicked
+            try:
+                for row in range(len(model_df)):
+                    prediction = model.predict(model_df.iloc[row, :].values.reshape(1, -1))
+                    prediction_proba = model.predict_proba(model_df.iloc[row, :].values.reshape(1, -1))
 
-        # Display prediction result with explanation
-        # 0: Not Clicked, 1: Clicked
-        try:
-            for row in range(len(model_df)):
-                prediction = model.predict(model_df.iloc[row, :].values.reshape(1, -1))
-                prediction_proba = model.predict_proba(model_df.iloc[row, :].values.reshape(1, -1))
+                    # Display prediction probability
+                    st.write(f"Probabilities for both classes for Customer {row + 1}: {prediction_proba[0]}")
 
-                # Display prediction probability
-                st.write(f"Probabilities for both classes for Customer {row + 1}: {prediction_proba[0]}")
+                    # Display prediction result with explanation
+                    if prediction[0] == 0:
+                        st.error(f"Customer {row + 1} is predicted as **Not Clicked**.\n\n**Not Clicked** means the customer is likely not to click on the ad.")
+                    else:
+                        st.success(f"Customer {row + 1} is predicted as **Clicked**.\n\n**Clicked** means the customer is likely to click on the ad.")
 
-                # Display prediction result with explanation
-                if prediction[0] == 0:
-                    st.error(f"Customer {row + 1} is predicted as **Not Clicked**.\n\n**Not Clicked** means the customer is likely not to click on the ad.")
-                else:
-                    st.success(f"Customer {row + 1} is predicted as **Clicked**.\n\n**Clicked** means the customer is likely to click on the ad.")
-
-        except Exception as e:
-            st.error(f"Error in prediction: {str(e)}") 
+            except Exception as e:
+                st.error(f"Error in prediction: {str(e)}") 

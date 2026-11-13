@@ -21,7 +21,8 @@ End-to-end data science project that analyzes customer behavior data to predict 
 ├── analysis/               # Jupyter notebooks (EDA, modeling, evaluation)
 ├── data/                   # Raw and processed datasets
 ├── models/                 # Trained model artifacts
-├── utils/                  # Reusable preprocessing and ML functions
+├── utils/                  # Vendored data-science-utils package (do not edit)
+├── app_pipeline.py         # Project-specific preprocessing and pipeline glue
 ├── main.py                 # Streamlit application
 ├── pyproject.toml          # Project dependencies (uv/pip)
 └── requirements.txt        # Pip-compatible dependencies
