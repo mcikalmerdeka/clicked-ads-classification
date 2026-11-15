@@ -21,7 +21,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from app_pipeline import NUMERIC_COLUMNS, TARGET_COLUMN
+from .schema import NUMERIC_COLUMNS, TARGET_COLUMN
 
 OUTCOME_LABELS = {0: "Not clicked", 1: "Clicked"}
 

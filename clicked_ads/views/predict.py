@@ -5,10 +5,9 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from app_analytics import confidence_label, explain_row, outcome_label
-from app_ui import contribution_chart, fmt_percent, probability_progress
-
-GENDERS = ["Perempuan", "Laki-Laki"]
+from clicked_ads.analytics import confidence_label, explain_row, outcome_label
+from clicked_ads.schema import GENDER_CATEGORIES
+from clicked_ads.ui import contribution_chart, fmt_percent, probability_progress
 
 TIME_KEY = "predict_time"
 AGE_KEY = "predict_age"
@@ -178,7 +177,7 @@ def render_predict_tab(model, pipeline, training: pd.DataFrame) -> None:
             )
             gender = st.selectbox(
                 "Gender",
-                GENDERS,
+                GENDER_CATEGORIES,
                 help="Gender recorded in the dataset.",
                 key=GENDER_KEY,
             )

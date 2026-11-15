@@ -5,15 +5,15 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from app_analytics import (
+from clicked_ads.analytics import (
     category_counts,
     coefficient_table,
     model_metrics,
     numeric_correlation,
     target_balance,
 )
-from app_pipeline import NUMERIC_COLUMNS
-from app_ui import (
+from clicked_ads.schema import NUMERIC_COLUMNS
+from clicked_ads.ui import (
     category_chart,
     coefficient_chart,
     confusion_chart,

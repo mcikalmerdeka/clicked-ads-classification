@@ -2,21 +2,17 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pandas as pd
 import streamlit as st
 
-from app_analytics import (
+from clicked_ads.analytics import (
     confidence_label,
     outcome_label,
     predict_frame,
 )
-from app_pipeline import NUMERIC_COLUMNS, initial_data_transform
-
-DATA_DIR = Path(__file__).resolve().parents[1] / "data"
-REQUIRED_COLUMNS = NUMERIC_COLUMNS + ["Gender", "Category"]
-GENDERS = ["Perempuan", "Laki-Laki"]
+from clicked_ads.config import BATCH_EXAMPLE_PATH
+from clicked_ads.pipeline import initial_data_transform
+from clicked_ads.schema import GENDER_CATEGORIES, REQUIRED_INPUT_COLUMNS
 
 DISPLAY_COLUMNS = [
     "Source row",
@@ -132,7 +128,7 @@ def render_batch_tab(model, pipeline, training: pd.DataFrame) -> None:
                 return
     elif source == "Example data":
         raw = _drop_unnamed(
-            pd.read_csv(DATA_DIR / "batch_example.csv").reset_index(drop=True)
+            pd.read_csv(BATCH_EXAMPLE_PATH).reset_index(drop=True)
         )
         st.caption("Using the five-row example from data/batch_example.csv.")
 
@@ -160,13 +156,17 @@ def render_batch_tab(model, pipeline, training: pd.DataFrame) -> None:
         st.error(f"Could not parse the input: {exc}")
         return
 
-    missing = [column for column in REQUIRED_COLUMNS if column not in raw.columns]
+    missing = [
+        column for column in REQUIRED_INPUT_COLUMNS if column not in raw.columns
+    ]
     if missing:
         st.error("Missing required columns: " + ", ".join(missing))
         return
 
     normalized_gender = raw["Gender"].astype("string").str.title()
-    unknown_genders = sorted(set(normalized_gender.dropna()) - set(GENDERS))
+    unknown_genders = sorted(
+        set(normalized_gender.dropna()) - set(GENDER_CATEGORIES)
+    )
     unknown_categories = sorted(set(raw["Category"].dropna()) - set(categories))
     if unknown_genders:
         st.warning(

@@ -18,16 +18,21 @@ End-to-end data science project that analyzes customer behavior data to predict 
 ## Project Structure
 
 ```
-├── analysis/               # Jupyter notebooks (EDA, modeling, evaluation)
+├── clicked_ads/            # Application package
+│   ├── config.py           # Filesystem paths
+│   ├── schema.py           # Dataset schema, constants, and data dictionary
+│   ├── pipeline.py         # Preprocessing and model input pipeline
+│   ├── analytics.py        # Metrics, coefficients, prediction explanations
+│   ├── ui.py               # Shared chart and formatting helpers
+│   └── views/              # Tab views: predict, batch, insights, about
+├── tests/                  # Pipeline, analytics, and app smoke tests
 ├── data/                   # Raw and processed datasets
 ├── models/                 # Trained model artifacts
 ├── utils/                  # Vendored data-science-utils package (do not edit)
-├── app_pipeline.py         # Project-specific preprocessing and pipeline glue
-├── app_analytics.py        # Metrics, coefficients, and prediction explanations
-├── app_ui.py               # Shared chart and formatting helpers
-├── app_views/              # Tab views: predict, batch, insights, about
-├── main.py                 # Streamlit application
-├── pyproject.toml          # Project dependencies (uv/pip)
+├── tasks/                  # Project deliverables (reports, slides, images)
+├── notebook.ipynb          # EDA, modeling, and evaluation notebook
+├── main.py                 # Streamlit entry point
+├── pyproject.toml          # Project dependencies and tool config
 └── requirements.txt        # Pip-compatible dependencies
 ```
 
@@ -44,7 +49,7 @@ cd Predict-Customer-Clicked-Ads-Classification-By-Using-Machine-Learning
 pip install -r requirements.txt
 
 # Or using uv (faster alternative)
-uv add -r requirements.txt
+uv sync
 ```
 
 ### Run the App
@@ -54,6 +59,12 @@ streamlit run main.py
 ```
 
 Access the app at `http://localhost:8501`
+
+### Run Tests
+
+```bash
+uv run pytest
+```
 
 ## Features
 
@@ -65,7 +76,7 @@ Access the app at `http://localhost:8501`
 
 ## Technical Stack
 
-- Python 3.12+
+- Python 3.14+
 - scikit-learn (modeling)
 - pandas, numpy (data processing)
 - Streamlit (web app)

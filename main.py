@@ -3,24 +3,20 @@
 from __future__ import annotations
 
 import warnings
-from pathlib import Path
 
 import joblib
 import pandas as pd
 import streamlit as st
 from sklearn.exceptions import InconsistentVersionWarning
 
-from app_pipeline import ClickedAdsPipeline, initial_data_transform
-from app_views import (
+from clicked_ads.config import MODEL_PATH, REFERENCE_DATA_PATH, TRAINING_DATA_PATH
+from clicked_ads.pipeline import ClickedAdsPipeline, initial_data_transform
+from clicked_ads.views import (
     render_about_tab,
     render_batch_tab,
     render_insights_tab,
     render_predict_tab,
 )
-
-ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "data"
-MODEL_PATH = ROOT / "models" / "tuned_logistic_regression_model.joblib"
 
 # The artifact was pickled with scikit-learn 1.4.0 while the app runs 1.8.0.
 warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
@@ -36,13 +32,13 @@ st.set_page_config(
 def load_artifacts():
     """Load the model, reference data, and fitted pipeline once per session."""
     model = joblib.load(MODEL_PATH)
-    reference = pd.read_csv(DATA_DIR / "df_model.csv")
+    reference = pd.read_csv(REFERENCE_DATA_PATH)
     training = initial_data_transform(
-        pd.read_csv(DATA_DIR / "clicked_ads_dataset.csv", index_col=0)
+        pd.read_csv(TRAINING_DATA_PATH, index_col=0)
     )
     pipeline = ClickedAdsPipeline.from_project_data(
-        DATA_DIR / "clicked_ads_dataset.csv",
-        DATA_DIR / "df_model.csv",
+        TRAINING_DATA_PATH,
+        REFERENCE_DATA_PATH,
     )
     return model, reference, training, pipeline
 

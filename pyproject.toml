@@ -1,7 +1,7 @@
 [project]
 name = "clicked-ads-classification"
 version = "0.1.0"
-description = "Add your description here"
+description = "Clicked Ads classification app and Streamlit dashboard"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -19,3 +19,12 @@ dependencies = [
     "tqdm>=4.67.3",
     "xgboost>=3.2.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

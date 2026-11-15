@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from app_pipeline import (
+from clicked_ads.schema import (
     NUMERIC_COLUMNS,
     TARGET_COLUMN,
     get_feature_definitions,

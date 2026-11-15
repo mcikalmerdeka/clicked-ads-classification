@@ -1,0 +1,1 @@
+"""Clicked Ads application package."""
